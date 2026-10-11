@@ -3,4 +3,5 @@ export type ConversationMessage = {
   role: 'user' | 'assistant'
   text: string
   timestamp: string
+  attachments?: string[]
 }

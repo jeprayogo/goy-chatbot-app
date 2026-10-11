@@ -11,6 +11,8 @@ type ChatApiResponse = {
 }
 
 const CHAT_API_URL = import.meta.env.VITE_CHAT_API_URL || 'http://localhost:3000/api/chat'
+const HEALTH_API_URL = import.meta.env.VITE_HEALTH_API_URL ||
+  CHAT_API_URL.replace(/\/api\/chat\/?$/, '/api/health')
 
 function currentTimestamp() {
   return new Intl.DateTimeFormat('id-ID', {
@@ -25,11 +27,35 @@ function App() {
   const [prompt, setPrompt] = useState('')
   const [messages, setMessages] = useState<ConversationMessage[]>([])
   const [isNewSession, setIsNewSession] = useState(false)
+  const [composerKey, setComposerKey] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [requestError, setRequestError] = useState('')
   const [status, setStatus] = useState('')
+  const [backendStatus, setBackendStatus] = useState<'checking' | 'online' | 'offline'>('checking')
 
   useEffect(() => () => activeRequest.current?.abort(), [])
+
+  useEffect(() => {
+    const controller = new AbortController()
+
+    async function checkBackendHealth() {
+      try {
+        const response = await fetch(HEALTH_API_URL, { signal: controller.signal })
+        if (!response.ok) {
+          setBackendStatus('offline')
+          return
+        }
+
+        const health = await response.json() as { status?: unknown }
+        setBackendStatus(health.status === 'ok' ? 'online' : 'offline')
+      } catch {
+        if (!controller.signal.aborted) setBackendStatus('offline')
+      }
+    }
+
+    void checkBackendHealth()
+    return () => controller.abort()
+  }, [])
 
   function startNewSession() {
     requestSequence.current += 1
@@ -38,14 +64,15 @@ function App() {
     setIsLoading(false)
     setMessages([])
     setPrompt('')
+    setComposerKey((current) => current + 1)
     setIsNewSession(true)
     setStatus('Obrolan baru siap dimulai.')
   }
 
-  async function sendMessage(text: string) {
+  async function sendMessage(text: string, files: File[]) {
     if (isLoading) return
     const message = text.trim()
-    if (!message) return
+      if (!message && files.length === 0) return
 
     const previousAssistantIndex = messages.reduce(
       (lastIndex, item, index) => item.role === 'assistant' ? index : lastIndex,
@@ -59,6 +86,7 @@ function App() {
       role: 'user',
       text: message,
       timestamp: currentTimestamp(),
+      attachments: files.map((file) => file.name),
     }
     const requestMessages = [...completedHistory, userMessage]
     const controller = new AbortController()
@@ -73,15 +101,16 @@ function App() {
     setIsLoading(true)
 
     try {
+      const formData = new FormData()
+      formData.append('conversation', JSON.stringify(requestMessages.map(({ role, text: content }) => ({
+        role,
+        text: content,
+      }))))
+      files.forEach((file) => formData.append('files', file))
+
       const response = await fetch(CHAT_API_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          conversation: requestMessages.map(({ role, text: content }) => ({
-            role,
-            text: content,
-          })),
-        }),
+        body: formData,
         signal: controller.signal,
       })
 
@@ -105,6 +134,7 @@ function App() {
       const assistantText = payload.response
 
       if (requestId !== requestSequence.current) return
+      setBackendStatus('online')
       setMessages((current) => [...current, {
         id: crypto.randomUUID(),
         role: 'assistant',
@@ -117,8 +147,9 @@ function App() {
         ? 'Tidak dapat terhubung ke backend. Pastikan server berjalan di http://localhost:3000.'
         : error instanceof Error
           ? error.message
-          : 'Terjadi kesalahan saat menghubungi backend chatbot.'
+          : 'Terjadi kesalahan saat menghubungi backend Mimin Poni.'
       setRequestError(message)
+      if (error instanceof TypeError) setBackendStatus('offline')
     } finally {
       if (requestId === requestSequence.current) {
         activeRequest.current = null
@@ -127,18 +158,9 @@ function App() {
     }
   }
 
-  function submitPrompt(event: FormEvent<HTMLFormElement>) {
+  function submitPrompt(event: FormEvent<HTMLFormElement>, files: File[]) {
     event.preventDefault()
-    void sendMessage(prompt)
-  }
-
-  async function copyCode(text: string) {
-    try {
-      await navigator.clipboard.writeText(text)
-      setStatus('Kode berhasil disalin.')
-    } catch {
-      setStatus('Clipboard tidak tersedia di browser ini.')
-    }
+    void sendMessage(prompt, files)
   }
 
   return (
@@ -147,7 +169,7 @@ function App() {
       <div className="ambient ambient-two" />
       <div className="ambient ambient-three" />
       <div className="main-panel">
-        <Topbar />
+        <Topbar backendStatus={backendStatus} />
         <main className="chat-workspace">
           <ConversationView
             isNewSession={isNewSession}
@@ -155,10 +177,10 @@ function App() {
             isLoading={isLoading}
             requestError={requestError}
             onNewSession={startNewSession}
-            onCopy={copyCode}
             onSuggestion={setPrompt}
           />
           <PromptComposer
+            key={composerKey}
             value={prompt}
             onChange={setPrompt}
             onSubmit={submitPrompt}

@@ -110,6 +110,15 @@
   backdrop-filter: blur(22px);
 }
 
+.topbar-logo {
+  display: block;
+  width: 156px;
+  height: auto;
+  flex: 0 0 auto;
+  object-fit: contain;
+  margin-right: auto;
+}
+
 .model-picker {
   position: relative;
 }
@@ -142,6 +151,16 @@
   border-radius: 50%;
   background: #53d7a1;
   box-shadow: 0 0 9px rgba(83, 215, 161, 0.6);
+}
+
+.online-dot--checking {
+  background: #f0bd4f;
+  box-shadow: 0 0 9px rgba(240, 189, 79, 0.45);
+}
+
+.online-dot--offline {
+  background: #ff7063;
+  box-shadow: 0 0 9px rgba(255, 112, 99, 0.45);
 }
 
 .model-menu {
@@ -351,12 +370,63 @@
 }
 
 .assistant-response {
-  white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
-.assistant-response p {
-  margin: 0;
+.assistant-response > :first-child {
+  margin-top: 0;
+}
+
+.assistant-response > :last-child {
+  margin-bottom: 0;
+}
+
+.assistant-response ul,
+.assistant-response ol {
+  margin: 0 0 14px;
+  padding-left: 22px;
+}
+
+.assistant-response li + li {
+  margin-top: 4px;
+}
+
+.assistant-response blockquote {
+  margin: 0 0 14px;
+  padding-left: 12px;
+  border-left: 2px solid var(--primary);
+  color: var(--muted);
+}
+
+.assistant-response code {
+  padding: 2px 5px;
+  border-radius: 4px;
+  color: #cbb6ff;
+  background: rgba(87, 27, 193, 0.17);
+  font-family: var(--mono);
+  font-size: 0.92em;
+}
+
+.assistant-response pre {
+  overflow: auto;
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border: 1px solid rgba(134, 147, 151, 0.16);
+  border-radius: 9px;
+  background: rgba(10, 14, 23, 0.76);
+}
+
+.assistant-response pre code {
+  padding: 0;
+  color: #c7d3e6;
+  background: transparent;
+  font-size: 10px;
+}
+
+.assistant-response a {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .assistant-copy strong {
@@ -705,6 +775,7 @@
 
 .attachment-chip {
   width: fit-content;
+  max-width: 100%;
   gap: 5px;
   margin: 1px 0 7px 2px;
   padding: 5px 8px;
@@ -714,8 +785,78 @@
   font-size: 9px;
 }
 
+.attachment-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px 7px;
+  margin-bottom: 7px;
+}
+
 .attachment-chip .material-symbols-outlined {
   font-size: 14px;
+}
+
+.attachment-chip > span:not(.material-symbols-outlined) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attachment-remove {
+  display: grid;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+
+.attachment-remove:hover {
+  color: var(--text);
+  background: rgba(76, 215, 246, 0.14);
+}
+
+.attachment-remove .material-symbols-outlined {
+  font-size: 13px;
+}
+
+.attachment-error {
+  margin: 0 0 7px 2px;
+  color: #ffb4ab;
+  font-size: 10px;
+}
+
+.sent-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.sent-attachment {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  gap: 5px;
+  overflow: hidden;
+  padding: 6px 8px;
+  border: 1px solid rgba(76, 215, 246, 0.12);
+  border-radius: 7px;
+  color: var(--primary);
+  background: rgba(76, 215, 246, 0.07);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sent-attachment .material-symbols-outlined {
+  font-size: 13px;
 }
 
 .composer-toolbar {
@@ -850,6 +991,10 @@
   .topbar {
     height: 58px;
     padding: 0 17px;
+  }
+
+  .topbar-logo {
+    width: 140px;
   }
 
   .chat-workspace {
