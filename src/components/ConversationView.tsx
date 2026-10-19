@@ -69,7 +69,7 @@ export default function ConversationView({
               text="Apa itu Unicorn Indorent Chatbot?"
               timestamp={currentWibTime}
             />
-            <AssistantMessage onSuggestion={onSuggestion} />
+            <AssistantMessage onSuggestion={onSuggestion} /> Hello,
           </>
         )}
       </div>

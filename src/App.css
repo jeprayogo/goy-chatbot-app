@@ -5,7 +5,7 @@
 .app-shell {
   position: relative;
   min-height: 100vh;
-  overflow: hidden;
+  overflow: clip;
   isolation: isolate;
   background:
     radial-gradient(ellipse at 64% 28%, rgba(24, 27, 37, 0.44), transparent 55%),
